@@ -192,6 +192,7 @@ public class CommandManager implements CommandExecutor {
                 if(args[i].endsWith("\"")){
                     value.append(replaceLast(args[i].replaceFirst("\"","").replace("\\\"","\""),"\"",""));
                     options.put(key,value.toString());
+                    key = null;
                 } else {
                     next = true;
                     value.append(args[i].replaceFirst("\"", "").replace("\\\"","\""));
@@ -205,6 +206,7 @@ public class CommandManager implements CommandExecutor {
                         next = false;
                         value.append(replaceLast(args[i].replace("\\\"","\""),"\"",""));
                         options.put(key,value.toString());
+                        key = null;
                     } else {
                         value.append(args[i].replace("\\\"","\""));
                     }
@@ -214,6 +216,7 @@ public class CommandManager implements CommandExecutor {
             } else {
                 value.append(args[i].replace("\\\"","\""));
                 options.put(key,value.toString());
+                key = null;
             }
         }
         return options;

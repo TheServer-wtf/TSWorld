@@ -1,18 +1,63 @@
 package hu.Pdani.TSWorld;
 
+import hu.Pdani.TSWorld.utils.FileManager;
 import hu.Pdani.TSWorld.utils.WorldException;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
+import static hu.Pdani.TSWorld.TSWorldPlugin.replaceLast;
 
 public class WorldManager {
+    private static HashMap<String,String> custom = new HashMap<>();
+    public static void startup(){
+        List<String> files = FileManager.getFiles();
+        if(!files.isEmpty()){
+            for(String f : files){
+                String name = replaceLast(f,".yml","");
+                FileConfiguration config = FileManager.getConfig(name);
+                if(!config.isSet("type")
+                        || !config.isSet("generatorSettings")
+                        || !config.isSet("environment")
+                        || !config.isSet("structures")
+                        || !config.isSet("seed"))
+                    continue;
+                String s_type = config.getString("type","NORMAL");
+                String s_gen = config.getString("generator", null);
+                String s_genset = config.getString("generatorSettings");
+                String s_env = config.getString("environment","NORMAL");
+                boolean struct = config.getBoolean("structures",true);
+                long seed = config.getLong("seed");
+                WorldCreator wc = new WorldCreator(name);
+                WorldType type = WorldType.getByName(s_type);
+                if(type == null) type = WorldType.NORMAL;
+                wc.type(type);
+                if(s_gen != null){
+                    custom.put(name,s_gen);
+                    wc.generator(s_gen);
+                }
+                wc.generatorSettings(s_genset);
+                Environment environment = Environment.NORMAL;
+                try {
+                    environment = Environment.valueOf(s_env);
+                }catch (IllegalArgumentException | NullPointerException ignore){}
+                wc.generateStructures(struct);
+                wc.seed(seed);
+                wc.createWorld();
+            }
+        }
+    }
+
     public static World createWorld(String name) throws WorldException {
         return createWorld(name,null);
     }
@@ -27,6 +72,7 @@ public class WorldManager {
         if(args != null && args.size() > 0){
             wc = setSettings(wc,args);
         }
+        saveWorld(name,wc);
         return wc.createWorld();
     }
 
@@ -44,6 +90,7 @@ public class WorldManager {
         if(args != null && args.size() > 0){
             wc = setSettings(wc,args);
         }
+        saveWorld(name,wc);
         return TSWorldPlugin.getTSWPlugin().getServer().createWorld(wc);
     }
 
@@ -60,6 +107,7 @@ public class WorldManager {
                 }
             }
             unload = TSWorldPlugin.getTSWPlugin().getServer().unloadWorld(check, true);
+            FileManager.delConfig(name);
         } else {
             throw new WorldException("The given world isn't loaded!");
         }
@@ -79,6 +127,7 @@ public class WorldManager {
                 }
             }
             unload = TSWorldPlugin.getTSWPlugin().getServer().unloadWorld(check, false);
+            FileManager.delConfig(name);
         }
         if(!unload)
             throw new WorldException("Failed to unload world!");
@@ -147,7 +196,8 @@ public class WorldManager {
                         break;
                     }
                     duplicate.add("gen");
-                    wc = wc.generator((String)value);
+                    custom.put(wc.name(),value);
+                    wc = wc.generator(value);
                     break;
                 case "gensettings":
                 case "gs":
@@ -165,6 +215,22 @@ public class WorldManager {
             }
         }
         return wc;
+    }
+
+    private static void saveWorld(String name, WorldCreator wc){
+        FileConfiguration config = FileManager.getConfig(name);
+        config.set("type",wc.type().getName());
+        if(custom.containsKey(name))
+            config.set("generator",custom.get(name));
+        config.set("generatorSettings",wc.generatorSettings());
+        config.set("environment",wc.environment().name());
+        config.set("structures",wc.generateStructures());
+        config.set("seed",wc.seed());
+        try {
+            config.save(FileManager.getFile(name));
+        } catch (IOException e) {
+            TSWorldPlugin.getTSWPlugin().getLogger().severe("Unable to save world config for world '"+name+"' !!!");
+        }
     }
 
     private static boolean delete(File path) {

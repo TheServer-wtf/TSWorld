@@ -12,6 +12,7 @@ public class TSWorldPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         plugin = this;
+        WorldManager.startup();
         Updater updater = new Updater("TheServer-wtf/TSWorld");
         if(updater.check()){
             getLogger().warning("There is a new version ("+updater.getLatest()+") available! Download it at https://github.com/"+updater.getRepo());
