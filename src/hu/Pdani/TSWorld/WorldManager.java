@@ -1,7 +1,7 @@
 package hu.Pdani.TSWorld;
 
 import hu.Pdani.TSWorld.utils.FileManager;
-import hu.Pdani.TSWorld.utils.WorldException;
+import hu.Pdani.TSWorld.utils.TSWorldException;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -51,23 +51,25 @@ public class WorldManager {
                 try {
                     environment = Environment.valueOf(s_env);
                 }catch (IllegalArgumentException | NullPointerException ignore){}
+                wc.environment(environment);
                 wc.generateStructures(struct);
                 wc.seed(seed);
                 wc.createWorld();
             }
         }
+        TSWorldPlugin.getTSWPlugin().getLogger().info("Loaded "+files.size()+" worlds.");
     }
 
-    public static World createWorld(String name) throws WorldException {
+    public static World createWorld(String name) throws TSWorldException {
         return createWorld(name,null);
     }
-    public static World createWorld(String name, HashMap<String,String> args) throws WorldException {
+    public static World createWorld(String name, HashMap<String,String> args) throws TSWorldException {
         World check = TSWorldPlugin.getTSWPlugin().getServer().getWorld(name);
         if(check != null)
-            throw new WorldException("This world already exists, and is loaded.");
+            throw new TSWorldException("This world already exists, and is loaded.");
         File wfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),name);
         if(wfile.exists() && wfile.isDirectory())
-            throw new WorldException("This world already exists, but isn't loaded.");
+            throw new TSWorldException("This world already exists, but isn't loaded.");
         WorldCreator wc = new WorldCreator(name);
         if(args != null && args.size() > 0){
             wc = setSettings(wc,args);
@@ -76,30 +78,30 @@ public class WorldManager {
         return wc.createWorld();
     }
 
-    public static World loadWorld(String name) throws WorldException {
+    public static World loadWorld(String name) throws TSWorldException {
         return loadWorld(name,null);
     }
-    public static World loadWorld(String name, HashMap<String,String> args) throws WorldException {
+    public static World loadWorld(String name, HashMap<String,String> args) throws TSWorldException {
         World check = TSWorldPlugin.getTSWPlugin().getServer().getWorld(name);
         if(check != null)
-            throw new WorldException("This world already exists, and is loaded.");
+            throw new TSWorldException("This world already exists, and is loaded.");
         File wfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),name);
         if(!wfile.exists())
-            throw new WorldException("This world doesn't exists.");
+            throw new TSWorldException("This world doesn't exists.");
         WorldCreator wc = new WorldCreator(name);
         if(args != null && args.size() > 0){
             wc = setSettings(wc,args);
         }
         saveWorld(name,wc);
-        return TSWorldPlugin.getTSWPlugin().getServer().createWorld(wc);
+        return wc.createWorld();
     }
 
-    public static boolean unloadWorld(String name) throws WorldException {
+    public static boolean unloadWorld(String name) throws TSWorldException {
         World check = TSWorldPlugin.getTSWPlugin().getServer().getWorld(name);
         boolean unload = true;
         if(check != null) {
             if(TSWorldPlugin.getTSWPlugin().getServer().getWorlds().get(0).getName().equalsIgnoreCase(name))
-                throw new WorldException("You can't unload the default world!");
+                throw new TSWorldException("You can't unload the default world!");
             Location def = TSWorldPlugin.getTSWPlugin().getServer().getWorlds().get(0).getSpawnLocation();
             for(Player p : TSWorldPlugin.getTSWPlugin().getServer().getOnlinePlayers()){
                 if(p.getWorld().getName().equalsIgnoreCase(name)){
@@ -109,17 +111,17 @@ public class WorldManager {
             unload = TSWorldPlugin.getTSWPlugin().getServer().unloadWorld(check, true);
             FileManager.delConfig(name);
         } else {
-            throw new WorldException("The given world isn't loaded!");
+            throw new TSWorldException("The given world isn't loaded!");
         }
         return unload;
     }
 
-    public static void deleteWorld(String name) throws WorldException {
+    public static void deleteWorld(String name) throws TSWorldException {
         World check = TSWorldPlugin.getTSWPlugin().getServer().getWorld(name);
         boolean unload = true;
         if(check != null) {
             if(TSWorldPlugin.getTSWPlugin().getServer().getWorlds().get(0).getName().equalsIgnoreCase(name))
-                throw new WorldException("You can't delete the default world!");
+                throw new TSWorldException("You can't delete the default world!");
             Location def = TSWorldPlugin.getTSWPlugin().getServer().getWorlds().get(0).getSpawnLocation();
             for(Player p : TSWorldPlugin.getTSWPlugin().getServer().getOnlinePlayers()){
                 if(p.getWorld().getName().equalsIgnoreCase(name)){
@@ -130,13 +132,13 @@ public class WorldManager {
             FileManager.delConfig(name);
         }
         if(!unload)
-            throw new WorldException("Failed to unload world!");
+            throw new TSWorldException("Failed to unload world!");
         File wfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),name);
         if(!wfile.exists())
-            throw new WorldException("The given world is already deleted!");
+            throw new TSWorldException("The given world is already deleted!");
         boolean success = delete(wfile);
         if(!success)
-            throw new WorldException("Unable to delete world directory, please delete it manually!");
+            throw new TSWorldException("Unable to delete world directory, please delete it manually!");
     }
 
     private static WorldCreator setSettings(WorldCreator wc, HashMap<String,String> args){

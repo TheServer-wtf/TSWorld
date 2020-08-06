@@ -1,6 +1,6 @@
 package hu.Pdani.TSWorld;
 
-import hu.Pdani.TSWorld.utils.WorldException;
+import hu.Pdani.TSWorld.utils.TSWorldException;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -44,7 +44,7 @@ public class CommandManager implements CommandExecutor {
                         if(args.length > 2){
                             WorldManager.createWorld(args[1],getOptions(args));
                         }
-                    } catch (WorldException e) {
+                    } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
                     }
@@ -59,7 +59,7 @@ public class CommandManager implements CommandExecutor {
                     }
                     try {
                         WorldManager.deleteWorld(args[1]);
-                    } catch (WorldException e) {
+                    } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
                     }
@@ -79,7 +79,7 @@ public class CommandManager implements CommandExecutor {
                         if(args.length > 2){
                             WorldManager.loadWorld(args[1],getOptions(args));
                         }
-                    } catch (WorldException e) {
+                    } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
                     }
@@ -94,7 +94,7 @@ public class CommandManager implements CommandExecutor {
                     }
                     try {
                         WorldManager.unloadWorld(args[1]);
-                    } catch (WorldException e) {
+                    } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
                     }
