@@ -25,6 +25,8 @@ public class WorldManager {
         if(!files.isEmpty()){
             for(String f : files){
                 String name = replaceLast(f,".yml","");
+                if(TSWorldPlugin.getTSWPlugin().getServer().getWorld(name) != null)
+                    continue;
                 FileConfiguration config = FileManager.getConfig(name);
                 if(!config.isSet("type")
                         || !config.isSet("generatorSettings")
@@ -37,6 +39,7 @@ public class WorldManager {
                 String s_genset = config.getString("generatorSettings");
                 String s_env = config.getString("environment","NORMAL");
                 boolean struct = config.getBoolean("structures",true);
+                boolean hardcore = config.getBoolean("hardcore",false);
                 long seed = config.getLong("seed");
                 WorldCreator wc = new WorldCreator(name);
                 WorldType type = WorldType.getByName(s_type);
@@ -54,6 +57,7 @@ public class WorldManager {
                 wc.environment(environment);
                 wc.generateStructures(struct);
                 wc.seed(seed);
+                wc.hardcore(hardcore);
                 wc.createWorld();
             }
         }
@@ -71,7 +75,7 @@ public class WorldManager {
         if(wfile.exists() && wfile.isDirectory())
             throw new TSWorldException("This world already exists, but isn't loaded.");
         WorldCreator wc = new WorldCreator(name);
-        if(args != null && args.size() > 0){
+        if(args != null && !args.isEmpty()){
             wc = setSettings(wc,args);
         }
         saveWorld(name,wc);
@@ -89,7 +93,7 @@ public class WorldManager {
         if(!wfile.exists())
             throw new TSWorldException("This world doesn't exists.");
         WorldCreator wc = new WorldCreator(name);
-        if(args != null && args.size() > 0){
+        if(args != null && !args.isEmpty()){
             wc = setSettings(wc,args);
         }
         saveWorld(name,wc);
@@ -208,8 +212,16 @@ public class WorldManager {
                         break;
                     }
                     duplicate.add("genset");
-                    TSWorldPlugin.getTSWPlugin().getLogger().info(value);
                     wc = wc.generatorSettings(value);
+                    break;
+                case "hardcore":
+                case "hc":
+                    if(duplicate.contains("hardcore")){
+                        TSWorldPlugin.getTSWPlugin().getLogger().warning("Duplicate world option '"+key+"', with value: '"+value+"'");
+                        break;
+                    }
+                    duplicate.add("hardcore");
+                    wc = wc.hardcore(Boolean.parseBoolean(value));
                     break;
                 default:
                     TSWorldPlugin.getTSWPlugin().getLogger().warning("Invalid world option '"+key+"', with value: '"+value+"'");
@@ -228,6 +240,7 @@ public class WorldManager {
         config.set("environment",wc.environment().name());
         config.set("structures",wc.generateStructures());
         config.set("seed",wc.seed());
+        config.set("hardcore",wc.hardcore());
         try {
             config.save(FileManager.getFile(name));
         } catch (IOException e) {

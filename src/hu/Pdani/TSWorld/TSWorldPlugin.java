@@ -1,6 +1,6 @@
 package hu.Pdani.TSWorld;
 
-import hu.Pdani.TSWorld.utils.TabCompleter;
+import hu.Pdani.TSWorld.utils.TSWTabCompleter;
 import hu.Pdani.TSWorld.utils.Updater;
 import org.bukkit.ChatColor;
 import org.bukkit.command.PluginCommand;
@@ -22,7 +22,7 @@ public class TSWorldPlugin extends JavaPlugin {
         PluginCommand command = getCommand("tsworld");
         if(command != null) {
             command.setExecutor(new CommandManager());
-            command.setTabCompleter(new TabCompleter());
+            command.setTabCompleter(new TSWTabCompleter());
         }
         getLogger().info("The plugin is now enabled.");
     }

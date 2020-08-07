@@ -28,6 +28,7 @@ public class CommandManager implements CommandExecutor {
                 sendInfo(sender);
                 return true;
             }
+            StringBuilder name = new StringBuilder();
             String exec = args[0];
             switch (exec.toLowerCase()){
                 case "c":
@@ -37,12 +38,39 @@ public class CommandManager implements CommandExecutor {
                         sender.sendMessage(c("&7Usage: &9/"+alias+" "+exec+" <world> [options]"));
                         break;
                     }
-                    sender.sendMessage(c("&eCreating world '"+args[1]+"'..."));
                     try {
-                        if(args.length == 2)
+                        if(args.length == 2) {
+                            sender.sendMessage(c("&eCreating world '" + args[1] + "'..."));
                             WorldManager.createWorld(args[1]);
+                        }
                         if(args.length > 2){
-                            WorldManager.createWorld(args[1],getOptions(args));
+                            boolean closed = true;
+                            int start = 1;
+                            if(args[1].startsWith("\"")){
+                                if(!args[1].endsWith("\"")) {
+                                    name.append(args[1].replaceFirst("\"",""));
+                                    closed = false;
+                                    for (int i = 2; i < args.length; i++) {
+                                        name.append("_");
+                                        start++;
+                                        if (args[i].endsWith("\"")) {
+                                            closed = true;
+                                            name.append(replaceLast(args[i], "\"", ""));
+                                            break;
+                                        } else {
+                                            name.append(args[i]);
+                                        }
+                                    }
+                                } else {
+                                    name.append(replaceLast(args[1].replaceFirst("\"",""),"\"",""));
+                                }
+                            }
+                            if(!closed){
+                                sender.sendMessage(c("&cError: Invalid world name."));
+                                break;
+                            }
+                            sender.sendMessage(c("&eCreating world '"+name.toString()+"'..."));
+                            WorldManager.createWorld(name.toString(),getOptions(args,start));
                         }
                     } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
@@ -58,7 +86,32 @@ public class CommandManager implements CommandExecutor {
                         break;
                     }
                     try {
-                        WorldManager.deleteWorld(args[1]);
+                        boolean closed = true;
+                        if(args[1].startsWith("\"")){
+                            if(!args[1].endsWith("\"")) {
+                                name.append(args[1].replaceFirst("\"", ""));
+                                closed = false;
+                                for (int i = 2; i < args.length; i++) {
+                                    name.append("_");
+                                    if (args[i].endsWith("\"")) {
+                                        closed = true;
+                                        name.append(replaceLast(args[i], "\"", ""));
+                                        break;
+                                    } else {
+                                        name.append(args[i]);
+                                    }
+                                }
+                            } else {
+                                name.append(replaceLast(args[1].replaceFirst("\"",""),"\"",""));
+                            }
+                        } else {
+                            name.append(args[1]);
+                        }
+                        if(!closed){
+                            sender.sendMessage(c("&cError: Invalid world name."));
+                            break;
+                        }
+                        WorldManager.deleteWorld(name.toString());
                     } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
@@ -72,12 +125,39 @@ public class CommandManager implements CommandExecutor {
                         sender.sendMessage(c("&7Usage: &9/"+alias+" "+exec+" <world>"));
                         break;
                     }
-                    sender.sendMessage(c("&eLoading world '"+args[1]+"'..."));
                     try {
-                        if(args.length == 2)
+                        if(args.length == 2) {
+                            sender.sendMessage(c("&eLoading world '" + args[1] + "'..."));
                             WorldManager.loadWorld(args[1]);
+                        }
                         if(args.length > 2){
-                            WorldManager.loadWorld(args[1],getOptions(args));
+                            boolean closed = true;
+                            int start = 1;
+                            if(args[1].startsWith("\"")){
+                                if(!args[1].endsWith("\"")) {
+                                    name.append(args[1].replaceFirst("\"", ""));
+                                    closed = false;
+                                    for (int i = 2; i < args.length; i++) {
+                                        name.append("_");
+                                        start++;
+                                        if (args[i].endsWith("\"")) {
+                                            closed = true;
+                                            name.append(replaceLast(args[i], "\"", ""));
+                                            break;
+                                        } else {
+                                            name.append(args[i]);
+                                        }
+                                    }
+                                }
+                            } else {
+                                name.append(replaceLast(args[1].replaceFirst("\"",""),"\"",""));
+                            }
+                            if(!closed){
+                                sender.sendMessage(c("&cError: Invalid world name."));
+                                break;
+                            }
+                            sender.sendMessage(c("&eLoading world '"+name.toString()+"'..."));
+                            WorldManager.loadWorld(name.toString(),getOptions(args,start));
                         }
                     } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
@@ -93,7 +173,32 @@ public class CommandManager implements CommandExecutor {
                         break;
                     }
                     try {
-                        WorldManager.unloadWorld(args[1]);
+                        boolean closed = true;
+                        if(args[1].startsWith("\"")){
+                            if(!args[1].endsWith("\"")) {
+                                name.append(args[1].replaceFirst("\"", ""));
+                                closed = false;
+                                for (int i = 2; i < args.length; i++) {
+                                    name.append("_");
+                                    if (args[i].endsWith("\"")) {
+                                        closed = true;
+                                        name.append(replaceLast(args[i], "\"", ""));
+                                        break;
+                                    } else {
+                                        name.append(args[i]);
+                                    }
+                                }
+                            } else {
+                                name.append(replaceLast(args[1].replaceFirst("\"",""),"\"",""));
+                            }
+                        } else {
+                            name.append(args[1]);
+                        }
+                        if(!closed){
+                            sender.sendMessage(c("&cError: Invalid world name."));
+                            break;
+                        }
+                        WorldManager.unloadWorld(name.toString());
                     } catch (TSWorldException e) {
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
@@ -126,7 +231,7 @@ public class CommandManager implements CommandExecutor {
                     List<World> worldList = TSWorldPlugin.getTSWPlugin().getServer().getWorlds();
                     sender.sendMessage(c("&fLoaded worlds ("+worldList.size()+"): "));
                     for(World w : worldList){
-                        sender.sendMessage("- "+w.getName()+" ("+w.getEnvironment().name()+")");
+                        sender.sendMessage("- '"+w.getName()+"' ("+w.getEnvironment().name()+")");
                     }
                     break;
                 case "ss":
@@ -174,12 +279,12 @@ public class CommandManager implements CommandExecutor {
             sender.sendMessage(c("&7- &9/"+alias+" list &7- &6List all the loaded worlds"));
     }
 
-    private HashMap<String,String> getOptions(String[] args){
+    private HashMap<String,String> getOptions(String[] args, int start){
         HashMap<String,String> options = new HashMap<>();
         String key = null;
         StringBuilder value = new StringBuilder();
         boolean next = false;
-        for(int i = 2;i < args.length;i++){
+        for(int i = 1+start;i < args.length;i++){
             if(args[i].startsWith("-")){
                 key = args[i].replaceFirst("-","");
                 continue;
