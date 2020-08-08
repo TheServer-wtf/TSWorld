@@ -36,6 +36,9 @@ public class FileManager {
         }
     }
     public static void delConfig(String name){
+        if(!files.containsKey(name)){
+            loadConfig(name);
+        }
         files.get(name).delete();
         files.remove(name);
         configs.remove(name);

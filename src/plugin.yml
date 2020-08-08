@@ -1,5 +1,5 @@
 name: TSWorld
-version: '0.10.5'
+version: '0.11.2'
 main: hu.Pdani.TSWorld.TSWorldPlugin
 authors: [Pdani001]
 api-version: '1.16'
@@ -17,6 +17,9 @@ permissions:
   tsworld.tp:
     default: false
     description: 'Permission to teleport to the given world'
+  tsworld.tp.others:
+    default: false
+    description: 'Permission to teleport other players to the given world'
   tsworld.list:
     default: false
     description: 'Permission to list the loaded worlds'
@@ -26,4 +29,5 @@ permissions:
     children:
       tsworld.use: true
       tsworld.tp: true
+      tsworld.tp.others: true
       tsworld.list: true

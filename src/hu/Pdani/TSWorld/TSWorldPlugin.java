@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class TSWorldPlugin extends JavaPlugin {
     private static TSWorldPlugin plugin;
+    private static CommandManager cmgr;
 
     @Override
     public void onEnable() {
@@ -20,15 +21,17 @@ public class TSWorldPlugin extends JavaPlugin {
             getLogger().info("You are running the latest version.");
         }
         PluginCommand command = getCommand("tsworld");
+        cmgr = new CommandManager();
         if(command != null) {
-            command.setExecutor(new CommandManager());
+            command.setExecutor(cmgr);
             command.setTabCompleter(new TSWTabCompleter());
         }
         getLogger().info("The plugin is now enabled.");
     }
     @Override
     public void onDisable() {
-        getLogger().info("The plugins is now disabled.");
+        cmgr.stopTasks();
+        getLogger().info("The plugin is now disabled.");
     }
 
     public TSWorldPlugin getPlugin() {

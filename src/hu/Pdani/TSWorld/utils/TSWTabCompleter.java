@@ -26,6 +26,7 @@ public class TSWTabCompleter implements TabCompleter {
                 if(sender.hasPermission("tsworld.admin")){
                     tabs.add("create");
                     tabs.add("delete");
+                    tabs.add("confirm");
                     tabs.add("load");
                     tabs.add("unload");
                 }
