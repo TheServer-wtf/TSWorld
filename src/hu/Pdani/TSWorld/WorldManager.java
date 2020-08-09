@@ -12,7 +12,9 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -92,6 +94,38 @@ public class WorldManager {
         File wfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),name);
         if(!wfile.exists())
             throw new TSWorldException("This world doesn't exists.");
+        boolean hasUid = false;
+        File uid = null;
+        File[] files = wfile.listFiles();
+        for (File file : files) {
+            if(!file.isDirectory() && file.getName().equalsIgnoreCase("uid.dat")){
+                hasUid = true;
+                uid = file;
+                break;
+            }
+        }
+        if(hasUid){
+            byte[] checkUid;
+            try {
+                checkUid = Files.readAllBytes(uid.toPath());
+            } catch (IOException | OutOfMemoryError e) {
+                throw new TSWorldException("Unable to load the worlds uid.dat file: "+e.toString());
+            }
+            for(World w : TSWorldPlugin.getTSWPlugin().getServer().getWorlds()){
+                File cwfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),w.getName());
+                File cuidfile = new File(cwfile,"uid.dat");
+                if(!cuidfile.exists())
+                    continue;
+                byte[] f2;
+                try {
+                    f2 = Files.readAllBytes(cuidfile.toPath());
+                } catch (IOException | OutOfMemoryError e) {
+                    throw new TSWorldException("There was an error while checking the worlds uid.dat file: "+e.toString());
+                }
+                if(Arrays.equals(checkUid,f2))
+                    throw new TSWorldException("World "+name+" is a duplicate of another world and has been prevented from loading. Please delete the uid.dat file from "+name+"'s world directory if you want to be able to load the duplicate world.");
+            }
+        }
         WorldCreator wc = new WorldCreator(name);
         if(args != null && !args.isEmpty()){
             wc = setSettings(wc,args);
