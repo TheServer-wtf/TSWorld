@@ -1,6 +1,5 @@
 package hu.Pdani.TSWorld.utils;
 
-import hu.Pdani.TSWorld.TSWorldPlugin;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -55,11 +54,11 @@ public class Updater {
 
     /**
      * Check if there is a newer version available
+     * @param current The current plugin version
      * @return true if there is a newer version
      */
-    public boolean check(){
+    public boolean check(String current){
         if(config != null){
-            String current = TSWorldPlugin.getTSWPlugin().getDescription().getVersion();
             String latest = config.getString("version");
             if(compareTo(current,latest) == -1){
                 this.latest = latest;
