@@ -292,7 +292,7 @@ public class WorldManager {
     }
 
     private static boolean validName(String name){
-        Matcher matches = Pattern.compile( "[^A-Za-z0-9]+" ).matcher(name);
+        Matcher matches = Pattern.compile( "[^A-Za-z0-9_]+" ).matcher(name);
         return !matches.find();
     }
 
