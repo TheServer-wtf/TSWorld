@@ -26,6 +26,7 @@ import static hu.Pdani.TSWorld.TSWorldPlugin.replaceLast;
 public class WorldManager {
     private static final HashMap<String,String> custom = new HashMap<>();
     private static final HashMap<String,String> nickname = new HashMap<>();
+    private static final ArrayList<String> worlds = new ArrayList<>();
     public static void startup(){
         List<String> files = FileManager.getFiles();
         int loaded = 0;
@@ -83,6 +84,7 @@ public class WorldManager {
                 wc.createWorld();
                 if(nick != null)
                     nickname.put(name,nick);
+                worlds.add(name);
                 loaded++;
             }
         }
@@ -195,6 +197,7 @@ public class WorldManager {
             wc = setSettings(wc,args);
         }
         saveWorld(name,wc);
+        worlds.add(name);
         return wc.createWorld();
     }
 
@@ -216,6 +219,7 @@ public class WorldManager {
             FileManager.getConfig(name).set("disabled",true);
             FileManager.saveConfig(name);
             nickname.remove(name);
+            worlds.remove(name);
         } else {
             throw new TSWorldException("The given world isn't loaded!");
         }
@@ -242,6 +246,7 @@ public class WorldManager {
         if(!unload)
             throw new TSWorldException("Failed to unload world!");
         nickname.remove(name);
+        worlds.remove(name);
         File wfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),name);
         if(!wfile.exists())
             throw new TSWorldException("The given world is already deleted!");
@@ -334,6 +339,10 @@ public class WorldManager {
             }
         }
         return wc;
+    }
+
+    public static List<String> getLoadedWorlds(){
+        return new ArrayList<>(worlds);
     }
 
     private static boolean validName(String name){

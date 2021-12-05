@@ -282,10 +282,11 @@ public class CommandManager implements CommandExecutor {
                     sender.sendMessage(c("&fLoaded worlds ("+worldList.size()+"): "));
                     for(World w : worldList){
                         String nick = WorldManager.getNickname(w.getName());
+                        String color = WorldManager.getLoadedWorlds().contains(w.getName()) ? "§a" : "§c";
                         if(nick != null)
-                            sender.sendMessage("- '"+nick+"' == "+w.getName()+" ["+w.getEnvironment().name()+"]");
+                            sender.sendMessage(color+"- '"+nick+"' == "+w.getName()+" ["+w.getEnvironment().name()+"]");
                         else
-                            sender.sendMessage("- '"+w.getName()+"' ["+w.getEnvironment().name()+"]");
+                            sender.sendMessage(color+"- '"+w.getName()+"' ["+w.getEnvironment().name()+"]");
                     }
                     break;
                 case "setspawn":
