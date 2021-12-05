@@ -1,5 +1,5 @@
 name: TSWorld
-version: '0.13.2'
+version: '0.13.3'
 main: hu.Pdani.TSWorld.TSWorldPlugin
 authors: [Pdani001]
 api-version: '1.16'

@@ -339,7 +339,7 @@ public class WorldManager {
     private static boolean validName(String name){
         if(name == null || name.isEmpty())
             return false;
-        Matcher matches = Pattern.compile( "[^A-Za-z0-9_]+" ).matcher(name);
+        Matcher matches = Pattern.compile( "[^A-Za-z0-9_/]+" ).matcher(name);
         return !matches.find();
     }
 
