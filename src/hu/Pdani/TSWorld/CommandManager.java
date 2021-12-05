@@ -1,7 +1,6 @@
 package hu.Pdani.TSWorld;
 
 import hu.Pdani.TSWorld.utils.TSWorldException;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,14 +11,13 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static hu.Pdani.TSWorld.TSWorldPlugin.c;
 import static hu.Pdani.TSWorld.TSWorldPlugin.replaceLast;
 
 public class CommandManager implements CommandExecutor {
-    private HashMap<CommandSender,String> delConfirm = new HashMap<>();
-    private HashMap<CommandSender, BukkitTask> delTask = new HashMap<>();
+    private final HashMap<CommandSender,String> delConfirm = new HashMap<>();
+    private final HashMap<CommandSender, BukkitTask> delTask = new HashMap<>();
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String alias, String[] args) {
         if(!cmd.getName().equalsIgnoreCase("tsworld")) return true;
@@ -35,7 +33,6 @@ public class CommandManager implements CommandExecutor {
             StringBuilder name = new StringBuilder();
             String exec = args[0];
             switch (exec.toLowerCase()){
-                case "c":
                 case "create":
                     if (!sender.hasPermission("tsworld.admin")) return true;
                     if(args.length < 2){
@@ -82,7 +79,6 @@ public class CommandManager implements CommandExecutor {
                     }
                     sender.sendMessage(c("&aWorld created."));
                     break;
-                case "d":
                 case "delete":
                     if (!sender.hasPermission("tsworld.admin")) return true;
                     if(args.length < 2){
@@ -133,19 +129,16 @@ public class CommandManager implements CommandExecutor {
                         sender.sendMessage(c("&cThere is nothing to confirm."));
                         break;
                     }
+                    if(delTask.containsKey(sender))
+                        delTask.remove(sender).cancel();
                     try{
-                        WorldManager.deleteWorld(delConfirm.get(sender));
+                        WorldManager.deleteWorld(delConfirm.remove(sender));
                     }catch (TSWorldException e){
                         sender.sendMessage(c("&cError: "+e.getMessage()));
                         break;
                     }
-                    delConfirm.remove(sender);
-                    if(delTask.containsKey(sender))
-                        delTask.get(sender).cancel();
-                    delTask.remove(sender);
                     sender.sendMessage(c("&aWorld deleted."));
                     break;
-                case "l":
                 case "load":
                     if (!sender.hasPermission("tsworld.admin")) return true;
                     if(args.length < 2){
@@ -192,7 +185,6 @@ public class CommandManager implements CommandExecutor {
                     }
                     sender.sendMessage(c("&aWorld loaded."));
                     break;
-                case "u":
                 case "unload":
                     if (!sender.hasPermission("tsworld.admin")) return true;
                     if(args.length < 2){
@@ -236,7 +228,6 @@ public class CommandManager implements CommandExecutor {
                     if(!(sender instanceof Player)) {
                         if(args.length < 3) {
                             sender.sendMessage(c("&7Usage: &9/"+alias+" tp <world> [player]"));
-                            break;
                         } else {
                             Player target = TSWorldPlugin.getTSWPlugin().getServer().getPlayer(args[2]);
                             if(target == null) {
@@ -250,8 +241,8 @@ public class CommandManager implements CommandExecutor {
                             }
                             sender.sendMessage(c("&aTeleporting..."));
                             target.teleport(world.getSpawnLocation());
-                            break;
                         }
+                        break;
                     }
                     Player player = (Player) sender;
                     if(!player.hasPermission("tsworld.tp"))
@@ -263,7 +254,10 @@ public class CommandManager implements CommandExecutor {
                             sender.sendMessage(c("&7Usage: &9/"+alias+" tp <world> [player]"));
                         break;
                     }
-                    World world = TSWorldPlugin.getTSWPlugin().getServer().getWorld(args[1]);
+                    String worldName = WorldManager.getWorldFromNick(args[1]);
+                    if(worldName == null)
+                        worldName = args[1];
+                    World world = TSWorldPlugin.getTSWPlugin().getServer().getWorld(worldName);
                     if(world == null){
                         sender.sendMessage(c("&cError: The given world is not loaded."));
                         break;
@@ -287,10 +281,13 @@ public class CommandManager implements CommandExecutor {
                     List<World> worldList = TSWorldPlugin.getTSWPlugin().getServer().getWorlds();
                     sender.sendMessage(c("&fLoaded worlds ("+worldList.size()+"): "));
                     for(World w : worldList){
-                        sender.sendMessage("- '"+w.getName()+"' ("+w.getEnvironment().name()+")");
+                        String nick = WorldManager.getNickname(w.getName());
+                        if(nick != null)
+                            sender.sendMessage("- '"+nick+"' == "+w.getName()+" ["+w.getEnvironment().name()+"]");
+                        else
+                            sender.sendMessage("- '"+w.getName()+"' ["+w.getEnvironment().name()+"]");
                     }
                     break;
-                case "ss":
                 case "setspawn":
                     if(!(sender instanceof Player)) {
                         sender.sendMessage("In-game only.");
@@ -302,6 +299,34 @@ public class CommandManager implements CommandExecutor {
                     world = player.getWorld();
                     world.setSpawnLocation(player.getLocation().add(0,1,0));
                     sender.sendMessage(c("&aSpawn location changed."));
+                    break;
+                case "nick":
+                    if(sender.hasPermission("tsworld.admin")){
+                        if(args.length < 2) {
+                            sender.sendMessage(c("&7Usage: &9/"+alias+" nick <world> [nickname]"));
+                        } else {
+                            world = TSWorldPlugin.getTSWPlugin().getServer().getWorld(args[1]);
+                            if(world == null){
+                                sender.sendMessage(c("&cError: The given world is not loaded."));
+                                break;
+                            }
+                            if(args.length == 3){
+                                try {
+                                    WorldManager.setNickname(world.getName(),args[2]);
+                                    sender.sendMessage(c("&aNickname updated."));
+                                } catch (TSWorldException e) {
+                                    sender.sendMessage(c("&cError: "+e.getMessage()));
+                                }
+                            } else {
+                                try {
+                                    WorldManager.setNickname(world.getName(),null);
+                                    sender.sendMessage(c("&aNickname removed."));
+                                } catch (TSWorldException e) {
+                                    sender.sendMessage(c("&cError: "+e.getMessage()));
+                                }
+                            }
+                        }
+                    }
                     break;
                 default:
                     sendInfo(sender);
@@ -315,19 +340,19 @@ public class CommandManager implements CommandExecutor {
         PluginDescriptionFile pdf = TSWorldPlugin.getTSWPlugin().getDescription();
         String version = pdf.getVersion();
         List<String> authors = pdf.getAuthors();
-        String longauthors = pdf.getAuthors().stream().collect(Collectors.joining(", ", "", ""));
-        String description = pdf.getDescription();
         sender.sendMessage(c("&eTSWorld plugin v"+version+" created by "+authors.get(0)));
     }
     private void sendHelp(CommandSender sender, String alias){
         if(!sender.hasPermission("tsworld.use"))
             return;
         if(sender.hasPermission("tsworld.admin")) {
-            sender.sendMessage(c("&7- &9/" + alias + " &bc&9reate <world> [options] &7- &6Creates a new world with the given options"));
-            sender.sendMessage(c("&7- &9/" + alias + " &bd&9elete <world> &7- &6Deletes the given world (&c&lIRREVERSIBLE!!! Copy the world file before running this!&6)"));
-            sender.sendMessage(c("&7- &9/" + alias + " &bl&9oad <world> [options] &7- &6Loads the given world from the disk, with the given options"));
-            sender.sendMessage(c("&7- &9/" + alias + " &bu&9nload <world> &7- &6Unloads the given world"));
-            sender.sendMessage(c("&7- &9/" + alias + " &bs&9et&bs&9pawn &7- &6Set the world spawn location to your position"));
+            sender.sendMessage(c("&7- &9/" + alias + " create <world> [options] &7- &6Creates a new world with the given options"));
+            sender.sendMessage(c("&7- &9/" + alias + " delete <world> &7- &6Deletes the given world"));
+            sender.sendMessage(c("&c&lWorld deletion is irreversible! Make sure to copy the world file before deleting it!"));
+            sender.sendMessage(c("&7- &9/" + alias + " load <world> [options] &7- &6Loads the given world from the disk, with the given options"));
+            sender.sendMessage(c("&7- &9/" + alias + " unload <world> &7- &6Unloads the given world"));
+            sender.sendMessage(c("&7- &9/" + alias + " setspawn &7- &6Set the world spawn location to your position"));
+            sender.sendMessage(c("&7- &9/" + alias + " nick <world> [nickname] &7- &6Set/Unset the world nickname used in the &9tp &6command"));
         }
         if(sender.hasPermission("tsworld.tp")) {
             if(!sender.hasPermission("tsworld.tp.others"))

@@ -17,13 +17,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static hu.Pdani.TSWorld.TSWorldPlugin.replaceLast;
 
 public class WorldManager {
-    private static HashMap<String,String> custom = new HashMap<>();
+    private static final HashMap<String,String> custom = new HashMap<>();
+    private static final HashMap<String,String> nickname = new HashMap<>();
     public static void startup(){
         List<String> files = FileManager.getFiles();
         int loaded = 0;
@@ -41,6 +43,8 @@ public class WorldManager {
                     continue;
                 }
                 FileConfiguration config = FileManager.getConfig(name);
+                if(config.getBoolean("disabled",false))
+                    continue;
                 if(!config.isSet("type")
                         || !config.isSet("generatorSettings")
                         || !config.isSet("environment")
@@ -49,6 +53,9 @@ public class WorldManager {
                     failed++;
                     continue;
                 }
+                String nick = config.getString("nick",null);
+                if(!validName(nick))
+                    nick = null;
                 String s_type = config.getString("type","NORMAL");
                 String s_gen = config.getString("generator", null);
                 String s_genset = config.getString("generatorSettings");
@@ -74,12 +81,47 @@ public class WorldManager {
                 wc.seed(seed);
                 wc.hardcore(hardcore);
                 wc.createWorld();
+                if(nick != null)
+                    nickname.put(name,nick);
                 loaded++;
             }
         }
         TSWorldPlugin.getTSWPlugin().getLogger().info("Loaded "+loaded+" worlds.");
         if(failed > 0)
             TSWorldPlugin.getTSWPlugin().getLogger().info(failed+" worlds failed to load.");
+        TSWorldPlugin.getTSWPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(TSWorldPlugin.getTSWPlugin(),()->{
+            TSWorldPlugin.getTSWPlugin().getServer().getWorlds().forEach(World::save);
+        },0, (long) TSWorldPlugin.getTSWPlugin().getConfig().getInt("SaveTime", 5) *60*20);
+    }
+
+    public static void setNickname(String world, String nick) throws TSWorldException {
+        if(!validName(world)){
+            throw new TSWorldException("The name of the world is invalid.");
+        }
+        World check = TSWorldPlugin.getTSWPlugin().getServer().getWorld(world);
+        if(check == null)
+            throw new TSWorldException("The given world isn't loaded!");
+        if(nick == null){
+            nickname.remove(world);
+            return;
+        }
+        if(!validName(nick)){
+            throw new TSWorldException("The given nickname is invalid.");
+        }
+        nickname.put(world, nick);
+    }
+
+    public static String getNickname(String name){
+        return nickname.get(name);
+    }
+
+    public static String getWorldFromNick(String name){
+        for(Map.Entry<String, String> n : nickname.entrySet()){
+            if(n.getValue().equalsIgnoreCase(name)){
+                return n.getKey();
+            }
+        }
+        return null;
     }
 
     public static World createWorld(String name) throws TSWorldException {
@@ -171,7 +213,9 @@ public class WorldManager {
                 }
             }
             TSWorldPlugin.getTSWPlugin().getServer().unloadWorld(check, true);
-            FileManager.delConfig(name);
+            FileManager.getConfig(name).set("disabled",true);
+            FileManager.saveConfig(name);
+            nickname.remove(name);
         } else {
             throw new TSWorldException("The given world isn't loaded!");
         }
@@ -197,6 +241,7 @@ public class WorldManager {
         }
         if(!unload)
             throw new TSWorldException("Failed to unload world!");
+        nickname.remove(name);
         File wfile = new File(TSWorldPlugin.getTSWPlugin().getServer().getWorldContainer(),name);
         if(!wfile.exists())
             throw new TSWorldException("The given world is already deleted!");
@@ -292,6 +337,8 @@ public class WorldManager {
     }
 
     private static boolean validName(String name){
+        if(name == null || name.isEmpty())
+            return false;
         Matcher matches = Pattern.compile( "[^A-Za-z0-9_]+" ).matcher(name);
         return !matches.find();
     }
@@ -306,11 +353,13 @@ public class WorldManager {
         config.set("structures",wc.generateStructures());
         config.set("seed",wc.seed());
         config.set("hardcore",wc.hardcore());
-        try {
-            config.save(FileManager.getFile(name));
-        } catch (IOException e) {
-            TSWorldPlugin.getTSWPlugin().getLogger().severe("Unable to save world config for world '"+name+"' !!!");
+        config.set("disabled",false);
+        if(config.isSet("nick")) {
+            String nick = config.getString("nick");
+            if(validName(nick))
+                nickname.put(name, config.getString("nick"));
         }
+        FileManager.saveConfig(name);
     }
 
     private static boolean delete(File path) {

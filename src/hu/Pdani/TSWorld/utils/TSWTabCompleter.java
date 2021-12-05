@@ -1,6 +1,7 @@
 package hu.Pdani.TSWorld.utils;
 
 import hu.Pdani.TSWorld.TSWorldPlugin;
+import hu.Pdani.TSWorld.WorldManager;
 import org.bukkit.World;
 import org.bukkit.WorldType;
 import org.bukkit.command.Command;
@@ -10,13 +11,9 @@ import org.bukkit.command.TabCompleter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
-
-import static hu.Pdani.TSWorld.TSWorldPlugin.c;
-import static hu.Pdani.TSWorld.TSWorldPlugin.replaceLast;
 
 public class TSWTabCompleter implements TabCompleter {
-    private HashMap<CommandSender,Long> seeds = new HashMap<>();
+    private final HashMap<CommandSender,Long> seeds = new HashMap<>();
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
         if(!cmd.getName().equalsIgnoreCase("tsworld")) return null;
@@ -29,6 +26,8 @@ public class TSWTabCompleter implements TabCompleter {
                     tabs.add("confirm");
                     tabs.add("load");
                     tabs.add("unload");
+                    tabs.add("setspawn");
+                    tabs.add("nick");
                 }
                 if(sender.hasPermission("tsworld.tp")) tabs.add("tp");
                 if(sender.hasPermission("tsworld.list")) tabs.add("list");
@@ -36,19 +35,32 @@ public class TSWTabCompleter implements TabCompleter {
         } else {
             String last = args[args.length-1];
             switch (args[0].toLowerCase()){
-                case "d":
-                case "delete":
+                case "nick":
+                    if(args.length == 2){
+                        for(World world : TSWorldPlugin.getTSWPlugin().getServer().getWorlds()){
+                            if(world.getName().toLowerCase().startsWith(last.toLowerCase()))
+                                tabs.add(world.getName());
+                        }
+                    }
+                    break;
                 case "tp":
-                case "u":
+                    for(World world : TSWorldPlugin.getTSWPlugin().getServer().getWorlds()){
+                        if(world.getName().toLowerCase().startsWith(last.toLowerCase())) {
+                            if(WorldManager.getNickname(world.getName()) != null)
+                                tabs.add(WorldManager.getNickname(world.getName()));
+                            else
+                                tabs.add(world.getName());
+                        }
+                    }
+                    break;
+                case "delete":
                 case "unload":
                     for(World world : TSWorldPlugin.getTSWPlugin().getServer().getWorlds()){
                         if(world.getName().toLowerCase().startsWith(last.toLowerCase()))
                             tabs.add(world.getName());
                     }
                     break;
-                case "c":
                 case "create":
-                case "l":
                 case "load":
                     if(args.length >= 3){
                         String prev = args[args.length-2];
